@@ -17,6 +17,26 @@ def show_todos():
         for i, task in enumerate(todos):
             status = "✅" if task["done"] else "❌"
             print(f"{i + 1} - {task['task']} [{status}]")
+
+def update_history(filename):
+    try:
+        with open(".history.txt", "r") as f:
+            lines = f.read().splitlines()
+    except FileNotFoundError:
+        lines = []
+
+    #adds file to the top of list.
+    if filename in lines:
+        lines.remove(filename)
+    lines.insert(0, filename)
+
+    #limits file to 5 lines.
+    lines = lines[:5]
+
+    with open(".history.txt", "w") as f:
+        for line in lines:
+            f.write(line + "\n")
+
 #mainmenu
 while True:
      print("\n--- LB23 TODO MENU ---")
@@ -67,11 +87,33 @@ while True:
         print(save_msg + save_filename)
      
      elif main_sel == "5": #Load todo-list.
-         load_filename = input("Enter filename to load from: ")
-         if not load_filename.endswith(".txt"):
-            load_filename += ".txt"
+        history = []
+        print("Recent files: ")
+        try:
+            with open(".history.txt", "r") as f:
+                history = f.read().splitlines()
+                if not history:
+                    print("(No recent files)")
+        except FileNotFoundError:
+            pass
 
-         try:
+        for idx, file in enumerate(history):
+            print(f"{idx+1} - {file}")
+
+        choice = input("Choose a file number or enter filename to load: ")
+        if choice.isdigit():
+            index = int(choice) - 1
+            if 0 <= index < len(history):
+                load_filename = history[index]
+            else:
+                print(mainerror)
+                continue
+        else:
+            load_filename = choice
+            if not load_filename.endswith(".txt"):
+                load_filename += ".txt"
+             
+        try:
             todos.clear()
             with open(load_filename, "r") as file:
                     for line in file:
@@ -79,8 +121,9 @@ while True:
                         todos.append({"task": task, "done": done == "True"})
             print("Todo list loaded!")
             show_todos()
-            
-         except FileNotFoundError:
+
+            update_history(load_filename)
+        except FileNotFoundError:
             print("File not found. Please check the name and try again.")
 
      elif main_sel == "6": #Status editing.
